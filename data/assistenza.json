@@ -1,0 +1,16 @@
+{
+    "guid": "",
+    "name": "Assistenza",
+    "uri": "",
+    "flags": 0,
+    "roles": [],
+    "tasks": [{
+        "guid": "",
+        "name": "start",
+        "start": true,
+        "data": [],
+        "transitions": [],
+        "policies": [],
+        "events": []
+    }]
+}

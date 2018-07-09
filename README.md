@@ -1,5 +1,7 @@
 # BPMS
 
+This project develops a BPMS object capable, via REST, of defining business processes and providing a mean of tracing their execution.
+
 Business Process Management System composed of a manager and interpreter.
 The manager allows the creation processes and handling of documents
 

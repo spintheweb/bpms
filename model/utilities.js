@@ -1,3 +1,9 @@
+/*!
+ * BPMS
+ * Copyright(c) 2018 Giancarlo Trevisan
+ * MIT Licensed
+ */
+
 function guid() {
     function s4() {
         return Math.floor((1 + Math.random()) * 0x10000)
@@ -7,5 +13,4 @@ function guid() {
     return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
 
-var assitenza = new Process(AssistenzaMod, "ACME");
-assistenza.transition({});
+module.exports = guid;

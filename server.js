@@ -1,34 +1,44 @@
-var express = require('express'),
+var path = require('path'),
+  express = require('express'),
   app = express(),
+  hostname = 'localhost',
   port = 3000;
 
-var bpms = require('./scripts/bpms');
+var bpms = require('./model/bpms');
 
-var process = bpms.createProcess('Riparazione');
-bpms.createProcess('DDT');
+app.route('/processes')
+  .get((req, res) => {
+    let txt = '';
+    bpms.processes.forEach((process) => {
+      txt += process.name;
+    });
+    res.send(txt);
+  })
+  .post(); // Create
 
-var task = bpms.createTask(process, 'START');
-task.add("cliente", "ACME");
+app.route('/process/:verb/:processId')
+  .get((req, res) => {
+    bpms.getProcess(req.params.processId);
+  })
+  .post((req, res) => {
+    bpms.setProcess(req.params.processId);
+  });
 
-var doc1 = bpms.createDocument(process, 'Riparazione PC1');
-var doc2 = bpms.createDocument(process, 'Riparazione PC2');
-var doc3 = bpms.createDocument(process, 'Riparazione PC3');
-var doc4 = bpms.createDocument(process, 'Riparazione PC4');
-
-app.get('/processes', function (req, res) {
-  let txt = '';
-  bpms.processes.forEach((process) => { txt += process.name; });
-  res.send(txt);
-});
-
-app.get('/doc1', function (req, res) {
-  res.send(doc1.name);
-});
+app.route('/docs')
+  .get((req, res) => { // List
+    res.send(doc1.name);
+  })
+  .post(); // Create
+  
+app.route('/doc/:verb/:docId')
+  .get() // Read
+  .put() // Update
+  .delete(); // Delete
 
 app.get('/', function (req, res) {
-  res.send("Benvenuto in BPMS");
+  res.sendFile(path.join(`${__dirname}/ui/index.html`));
 });
 
-app.listen(port);
+app.listen(port, hostname);
 
-console.log('Listening on: ' + port);
+console.log(`BPMS listening on ${hostname}:${port}`);

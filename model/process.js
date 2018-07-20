@@ -4,12 +4,11 @@
  * MIT Licensed
  */
 
-var Task = require('./task');
-var guid = require('./utilities');
+const Task = require('./task');
 
 class Process {
     constructor(name = 'New Process') {
-        this.guid = guid();
+        this.guid = null;
         this.name = name;
         this.created = new Date();
         this.modified = null;
@@ -32,6 +31,9 @@ class Process {
             this.tasks.push(child);
         }
         this.modified = new Date();
+    }
+    static update(data) {
+
     }
 }
 

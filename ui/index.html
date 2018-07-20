@@ -1,12 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>BPMS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt"
+        crossorigin="anonymous">
+    <script>
+        var processes = [{
+            code: "riparazione",
+            title: "Riparazione",
+            tasks: [{
+                    code: "apertura",
+                    title: "Apertura",
+                    data: [{
+                            name: "fullname",
+                            type: "text",
+                            default: "topolino",
+                            required: true,
+                            description: "First and last name"
+                        },
+                        {
+                            name: "street",
+                            type: "text",
+                            default: null,
+                            required: true
+                        },
+                        {
+                            name: "city",
+                            type: "text",
+                            default: null,
+                            required: true
+                        },
+                        {
+                            name: "zip",
+                            type: "text",
+                            default: null,
+                            required: true
+                        },
+                        {
+                            name: "phone",
+                            type: "text",
+                            default: null,
+                            required: false
+                        },
+                        {
+                            name: "email",
+                            type: "email",
+                            default: null,
+                            required: false
+                        },
+                        {
+                            name: "articolo",
+                            type: "text",
+                            required: true,
+                            description: "Coldice articolo"
+                        },
+                        {
+                            name: "note",
+                            type: "date",
+                            default: null,
+                            required: false
+                        }
+                    ],
+                    transitions: [{
+                        toTask: "analisi",
+                        logic: function () {
+                            return true;
+                        }
+                    }]
+                },
+                {
+                    code: "analisi",
+                    title: "Analisi",
+                    data: [{
+                            name: "note",
+                            type: "text",
+                            required: true,
+                            description: "note"
+                        },
+                        {
+                            name: "street",
+                            type: "text",
+                            default: null,
+                            required: true
+                        }
+                    ],
+                    transitons: [{
+                        toTask: "conclusione",
+                        logic: function () {
+                            return true;
+                        }
+                    }]
+                },
+                {
+                    code: "conclusione",
+                    title: "Conclusione",
+                    data: [{
+                        name: "note",
+                        type: "text",
+                        default: "topolino",
+                        required: true,
+                        description: "Note"
+                    }],
+                    transitons: []
+                }
+            ]
+        }];
+
+        if (!localStorage.documents) {
+            localStorage.documents = [];
+
+            var doc = {
+                model: "riparazione", // processes[0],
+                code: "Riparazione1",
+                name: "Riparazione PC",
+                created: new Date(),
+                completed: null,
+                tasks: [{
+                    model: "apertura", // processModel.tasks[0],
+                    state: 1,
+                    created: new Date(),
+                    completed: null,
+                    data: {
+                        city: "Topolinia",
+                        fullname: "pluto",
+                        street: "via del corvo"
+                    }
+                }]
+            };
+            localStorage.documents.push(JSON.stringify(doc));
+        }
+        var documents = JSON.parse(localStorage.documents);
+
+        function getProcess(code) {
+            return processes.find(function (process) { return process.code === code; });
+        }
+        function getTask(processCode, taskCode) {
+            return getProcess(processCode).tasks.find(function (task) { return task.code === taskCode; });
+        }
+        function getDocument() {}
+
+        function visualize(id, idDoc) {
+            var doc = documents[idDoc];
+            var html = '<h1>' + doc.name + '</h1>';
+            doc.tasks.forEach(function (task, i) {
+                html += '<form data-doc="' + idDoc + '" data-task="' + i + '"><h2>' + task.model.title +
+                    '</h2>';
+                if (task.state === 1) {
+                    task.model.data.forEach(function (d) {
+                        html += '<label>' + (d.description ? d.description : d.name) +
+                            '</label> <input type="' + (d.type || 'text') + '" name="' + d.name +
+                            '" value="' + (task.data[d.name] ? task.data[d.name] : d.default || '') +
+                            '"' + (d.required ? 'required' : '') +
+                            '><i class="fas fa-fw fa-info-circle" title="' + d.description +
+                            '"></i><br>';
+                    });
+                    html +=
+                        '<input type="submit" value="Proceed" onclick="proceed(this.form)"> <!--input type="submit" value="Release"--></form>';
+                } else {
+                    task.model.data.forEach(function (d) {
+                        html += '<label>' + (d.description ? d.description : d.name) + '</label> ' + (
+                                task.data[d.name] ? task.data[d.name] : d.default || '') +
+                            '<i class="fas fa-fw fa-info-circle" title="' + d.description +
+                            '"></i><br>';
+                    });
+                    html += '</form>';
+                }
+            });
+
+            var el = document.getElementById(id);
+            el.innerHTML = html;
+        }
+
+        function proceed(form) {
+            var complete = true,
+                doc = documents[form.getAttribute('data-doc')],
+                task = doc.tasks[form.getAttribute('data-task')];
+            task.model.data.forEach(function (d) {
+                task.data[d.name] = form.querySelector('input[name=' + d.name + ']').value;
+                if (!task.data[d.name] && d.required)
+                    complete = false;
+            });
+            if (complete) {
+                task.state = 2; // Task closed
+                task.completed = new Date();
+                task.model.transitions.forEach(function (transition) {
+                    if (transition.logic()) {
+                        doc.tasks.push({
+                            model: doc.model.tasks.find(function (task) {
+                                return task.code === transition.toTask;
+                            }),
+                            state: 1,
+                            created: new Date(),
+                            data: []
+                        });
+                    }
+                });
+            }
+            localStorage.documents = JSON.stringify(documents);
+            return complete;
+        }
+    </script>
 </head>
-<body>
-    Welcome to BPMS
+
+<body onload="visualize('someId', 0)">
+    <!--
+    <h1>BPMS</h1>
+    <ul class="tabs">
+        <li class="tab">Documents</li>
+        <li class="tab selected">Processes</li>
+        <li class="tab">Roles</li>
+        <li class="tab">Users</li>
+        <li class="tabpage">Manage documents</li>
+        <li class="tabpage selected">Manage processes</li>
+        <li class="tabpage">Manage roles</li>
+        <li class="tabpage">Manage users</li>
+    </ul>
+    -->
+    <div id="someId"></div>
 </body>
+
 </html>

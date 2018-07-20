@@ -4,18 +4,19 @@
  * MIT Licensed
  */
 
-var Data = require('mongoose');
-var Process = require('./process');
-var Document = require('./document');
+const Data = require('mongoose');
+const Process = require('./process');
+const Document = require('./document');
 
 module.exports = (settings) => {
     let bpms = {
+        language: 'en',
         datasource: settings.datasource | 'mongodb://localhost:27017/bpms',
         processes: [],
         organigrams: [],
         roles: []
     };
-
+    
 //    Data.connect(bpms.datasource);
 //    bpms.db = Data.connection;
 
@@ -44,6 +45,8 @@ module.exports = (settings) => {
         return document;
     };
     bpms.deleteDocument = (id) => {};
+
+    bpms.createRole
 
     return bpms;
 };

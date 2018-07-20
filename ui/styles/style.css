@@ -1,0 +1,10 @@
+:root {
+    --main-color: #333333;
+}
+
+.tabs { list-style-type: none; padding: 0; }
+.tabs .tab { float: left; border: 1px solid var(--main-color); border-bottom: none; }
+.tabs .tabpage { display: none; clear: both; }
+.tabs .selected { display: block; border: 1px solid var(--main-color); }
+
+label { display: inline-block; width: 15em; line-height: 2em; }

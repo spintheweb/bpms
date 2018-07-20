@@ -4,7 +4,7 @@
  * MIT Licensed
  */
 
-var Process = require('./process');
+const Process = require('./process');
 
 class Document {
     constructor(process, name) {
@@ -15,6 +15,7 @@ class Document {
         this.createdBy = null;
         this.managedBy = null;
         this.status = 1;
+        this.tasks = [];
 
         if (process instanceof Process)
             this.process = process;
@@ -26,6 +27,9 @@ class Document {
     }
     set unit(value) {
         this.unit = value;
+    }
+    add() {
+
     }
 }
 module.exports = Document;

@@ -4,10 +4,9 @@
  * MIT Licensed
  */
 
-var Process = require('./process');
-var Document = require('./document');
-var Transition = require('./transition');
-var Role = require('./role');
+const Process = require('./process');
+const Document = require('./document');
+const Role = require('./role');
 
 // A task is a wrapped collection of key-value pairs
 class TaskModel {
@@ -17,15 +16,17 @@ class TaskModel {
         this.name = name;
         this.data = data;
         this.policies = [];
-        this.transitions = [];
+        this.transitions = [
+            { taskModel: guid, proceed: () => { return true; } }
+        ];
         this.attributes = [];
         this.ui = null;
     }
     add(child, value) {
         if (child instanceof Role) {
             this.policies[child] = value;
-        } else if (child instanceof Transition) {
-            this.transitions[child] = value | true; // 
+        } else if (child instanceof Function) {
+            this.transitions[child] = value || function() { return true; }; // 
         } else if (child instanceof String) {
             this.data[child] = value;
         } else {
@@ -65,10 +66,11 @@ class Task {
         this.data = data;        
         for (let i = 0; i < this.model.data.length; ++i)
             if (this.model.data[i].required && !this.data[this.model.data[i].name])
-                return 1;
+                return false;
 
         this.model.transitions.forEach(transition => {
-
+            if (transition.logic()) // Only once task?
+                this.parent.add(new Task(proceed.taskModel));
         });
     }
     release(role) {

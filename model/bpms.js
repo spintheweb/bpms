@@ -4,21 +4,46 @@
  * MIT Licensed
  */
 
-const Data = require('mongoose');
+const DBClient = require('mongodb').MongoClient;
+
 const Process = require('./process');
 const Document = require('./document');
+const Role = require('./role');
 
-module.exports = (settings) => {
-    let bpms = {
-        language: 'en',
-        datasource: settings.datasource | 'mongodb://localhost:27017/bpms',
-        processes: [],
-        organigrams: [],
-        roles: []
-    };
+// NOTES: Context language, domain
+
+module.exports = (settings = {}) => {
+    let bpms = {};
+
+    bpms.datasource = settings.datasource || 'mongodb://localhost:27017/bpms';
     
-//    Data.connect(bpms.datasource);
-//    bpms.db = Data.connection;
+    // If BPMS does not exist create it
+    DBClient.connect(bpms.datasource)
+        .then(db => {
+
+        })
+        .catch((err) => {
+            throw err;
+        });
+
+    // Initialize BPMS if empty
+    // Create default roles: administrator, editor, observer
+    // Create default Memo process
+    if (!bpms.processes()) {
+        let memo = new Process('memo');
+    }
+
+    bpms.processes = (id, data) => { 
+        DBClient.connect(bpms.datasource)
+            .then(db => {
+                return db.collection('processes')
+                    .find({}, { _id: id })
+                    .then(result => result)
+                    .then(() => db.close());
+            });
+    };
+    bpms.roles = () => null;
+    bpms.documents = () => null;
 
     bpms.getProcess = (guid) => {};
     bpms.setProcess = (guid, data) => {
@@ -30,7 +55,7 @@ module.exports = (settings) => {
         }
         return process;
     };
-    bpms.deleteProcess = (id) => {};
+    bpms.deleteProcess = (guid) => {};
 
     bpms.getDocument = (guid) => {
     };
@@ -46,7 +71,9 @@ module.exports = (settings) => {
     };
     bpms.deleteDocument = (id) => {};
 
-    bpms.createRole
+    bpms.createRole = (name, members) => {
+        let role = bpms.roles.find((role) => { return role.name === name; });
+    };
 
     return bpms;
 };

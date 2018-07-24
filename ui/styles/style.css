@@ -7,4 +7,6 @@
 .tabs .tabpage { display: none; clear: both; }
 .tabs .selected { display: block; border: 1px solid var(--main-color); }
 
+form { display: grid; border: 1px solid var(--main-color); margin: 0.5em 0; padding: 0.5em; }
+form > fieldset { border: none; padding: 0; }
 label { display: inline-block; width: 15em; line-height: 2em; }

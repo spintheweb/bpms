@@ -12,6 +12,7 @@ const Role = require('./role');
 class TaskModel {
     constructor(process, name = 'New Task', data = [ { name: "notes", type: "String", default: null, required: false, description: "Notes", policies: [] }]) {
         this.guid = null; // Assigned by mongodb
+        this.code = code;
         this.parent = process;
         this.name = name;
         this.data = data;

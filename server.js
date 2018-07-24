@@ -4,7 +4,7 @@ const path = require('path'),
   hostname = 'localhost',
   port = 3000;
 
-const bpms = require('./model/bpms');
+//const bpms = require('./model/bpms')({ datasource: 'mongodb://localhost:27017/bpms' });
 
 app.use('/css', express.static(path.join(__dirname, '/ui/styles')));
 

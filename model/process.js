@@ -7,12 +7,13 @@
 const Task = require('./task');
 
 class Process {
-    constructor(name = 'New Process') {
+    constructor(code = 'New Process') {
         this.guid = null;
-        this.name = name;
+        this.code = code;
+        this.name = code;
+        this.domain = null; // 
         this.created = new Date();
         this.modified = null;
-        this.due = null;
         this.roles = [];
         this.tasks = [];
         this.status = 1;

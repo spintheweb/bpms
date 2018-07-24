@@ -6,30 +6,39 @@
 
 const Process = require('./process');
 
+// TODO: parents, children and ties should be just ties with motives
+
 class Document {
     constructor(process, name) {
-        this.name = name;
-        this.unit = null;
-        this.created = new Date();
-        this.modified = null;
-        this.createdBy = null;
-        this.managedBy = null;
-        this.status = 1;
-        this.tasks = [];
-
         if (process instanceof Process)
-            this.process = process;
+            this.model = process;
         else
-            this.process = null; // Base process one task with notes
+            this.model = null; // Base process memo
+
+        this.guid = null;
+        this.name = name;
+        this.domain = null; // Associated business domain
+        this.created = new Date();
+        this.createdBy = null;
+        this.modified = null;
+        this.due = null;
+        this.managedBy = null;
+        this.status = 1; // Open, Standby, Closed
+        this.tasks = [];
+        this.ties = []; // Tied documents
     }
-    get unit() {
-        return this.unit;
+    get domain() {
+        return this.domain;
     }
-    set unit(value) {
-        this.unit = value;
+    set domain(value) {
+        this.domain = value;
     }
     add() {
 
     }
+    insert() {}
+    update() {}
+    delete() {}
+    select() { return this; }
 }
 module.exports = Document;

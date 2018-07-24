@@ -10,60 +10,75 @@
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.1.0/css/all.css" integrity="sha384-lKuwvrZot6UHsBSfcMvOkWwlCMgc0TaWr+30HWe3a4ltaBwTZhyTEggF5tJv8tbt"
         crossorigin="anonymous">
     <script>
+        // TODO: session
+        var context = {
+            domain: "keyvisions.it",
+            user: "fred",
+            lang: "en"
+        };
+
+        var enumState = { open: 1, hold: 2, closed: 3 };
+        var enumData = { required: 1, conditional: 2, analytical: 4 };
+
+        // TODO: members should be SIDs? emails? Note the possibility of cross domain roles
+        var organigram = {
+            "keyvisions.it": {
+                managment: [ "fred", "john" ],
+                administration: [ "vilma", "barnie" ],
+                production: [ "jack", "rob", "kyle" ],
+                service: [ "jack", "rob" ],
+                sales: [ "frank", "sue" ],
+                logistics: [ "phil" ]
+            }
+        };
+
+        // A policy attributes permissions (rwx) to a role at process, task and data levels. x indicates the ability to create
+        var enumPolicy = { none: 0, read: 1, write: 2, execute: 4 };
+        var enumTask = { start: 1, restart: 2, end: 4 }
+
         var processes = [{
+            domain: "keyvisions.it",
             code: "riparazione",
             title: "Riparazione",
+            policies: { service: enumPolicy.execute },
             tasks: [{
                     code: "apertura",
                     title: "Apertura",
+                    flags: enumTask.start,
                     data: [{
                             name: "fullname",
-                            type: "text",
                             default: "topolino",
-                            required: true,
-                            description: "First and last name"
+                            label: "First and last name",
+                            flags: enumData.required,
+                            policies: { production: enumPolicy.read }
                         },
                         {
                             name: "street",
-                            type: "text",
-                            default: null,
-                            required: true
+                            flags: enumData.required
                         },
                         {
                             name: "city",
-                            type: "text",
-                            default: null,
-                            required: true
+                            flags: enumData.required
                         },
                         {
                             name: "zip",
-                            type: "text",
-                            default: null,
-                            required: true
+                            flags: enumData.required
                         },
                         {
                             name: "phone",
-                            type: "text",
-                            default: null,
-                            required: false
                         },
                         {
                             name: "email",
                             type: "email",
-                            default: null,
-                            required: false
                         },
                         {
                             name: "articolo",
-                            type: "text",
-                            required: true,
-                            description: "Coldice articolo"
+                            flags: enumData.required,
+                            label: "Codice articolo"
                         },
                         {
                             name: "note",
-                            type: "date",
-                            default: null,
-                            required: false
+                            type: "date"
                         }
                     ],
                     transitions: [{
@@ -71,25 +86,24 @@
                         logic: function () {
                             return true;
                         }
-                    }]
+                    }],
+                    policies: { managment: enumPolicy.read }
                 },
                 {
                     code: "analisi",
                     title: "Analisi",
                     data: [{
                             name: "note",
-                            type: "text",
-                            required: true,
-                            description: "note"
+                            flags: enumData.required,
+                            label: "note"
                         },
                         {
-                            name: "street",
-                            type: "text",
-                            default: null,
-                            required: true
+                            name: "costo",
+                            type: "number",
+                            flags: enumData.required
                         }
                     ],
-                    transitons: [{
+                    transitions: [{
                         toTask: "conclusione",
                         logic: function () {
                             return true;
@@ -100,31 +114,31 @@
                     code: "conclusione",
                     title: "Conclusione",
                     data: [{
-                        name: "note",
-                        type: "text",
-                        default: "topolino",
-                        required: true,
-                        description: "Note"
+                        name: "notes",
+                        default: { it: "topolino", en: "Mickey Mouse" },
+                        flags: enumData.required | enumData.conditional,
+                        label: { it: "Note", en: "Notes" }
                     }],
-                    transitons: []
+                    transitions: []
                 }
             ]
         }];
 
+        var documents = [];
         if (!localStorage.documents) {
-            localStorage.documents = [];
-
             var doc = {
-                model: "riparazione", // processes[0],
+                model: "riparazione",
                 code: "Riparazione1",
                 name: "Riparazione PC",
                 created: new Date(),
+                creator: context.user,
                 completed: null,
+                policies: { managment: enumPolicy.execute },
                 tasks: [{
-                    model: "apertura", // processModel.tasks[0],
+                    model: "apertura",
                     state: 1,
                     created: new Date(),
-                    completed: null,
+                    creator: context.user,
                     data: {
                         city: "Topolinia",
                         fullname: "pluto",
@@ -132,82 +146,121 @@
                     }
                 }]
             };
-            localStorage.documents.push(JSON.stringify(doc));
+            documents.push(doc);
+            localStorage.documents = JSON.stringify(documents);
         }
         var documents = JSON.parse(localStorage.documents);
 
-        function getProcess(code) {
-            return processes.find(function (process) { return process.code === code; });
+        function getProcess(processCode) {
+            return processes.find(function (process) { return process.code === processCode; });
         }
         function getTask(processCode, taskCode) {
             return getProcess(processCode).tasks.find(function (task) { return task.code === taskCode; });
         }
-        function getDocument() {}
 
-        function visualize(id, idDoc) {
-            var doc = documents[idDoc];
-            var html = '<h1>' + doc.name + '</h1>';
-            doc.tasks.forEach(function (task, i) {
-                html += '<form data-doc="' + idDoc + '" data-task="' + i + '"><h2>' + task.model.title +
-                    '</h2>';
-                if (task.state === 1) {
-                    task.model.data.forEach(function (d) {
-                        html += '<label>' + (d.description ? d.description : d.name) +
-                            '</label> <input type="' + (d.type || 'text') + '" name="' + d.name +
-                            '" value="' + (task.data[d.name] ? task.data[d.name] : d.default || '') +
-                            '"' + (d.required ? 'required' : '') +
-                            '><i class="fas fa-fw fa-info-circle" title="' + d.description +
-                            '"></i><br>';
-                    });
-                    html +=
-                        '<input type="submit" value="Proceed" onclick="proceed(this.form)"> <!--input type="submit" value="Release"--></form>';
-                } else {
-                    task.model.data.forEach(function (d) {
-                        html += '<label>' + (d.description ? d.description : d.name) + '</label> ' + (
-                                task.data[d.name] ? task.data[d.name] : d.default || '') +
-                            '<i class="fas fa-fw fa-info-circle" title="' + d.description +
-                            '"></i><br>';
-                    });
-                    html += '</form>';
-                }
-            });
-
-            var el = document.getElementById(id);
-            el.innerHTML = html;
+        // TODO: Get and set
+        function polyglot(txt, lang) {
+            if (typeof txt === 'string')
+                return txt;
+            if (typeof txt === 'object')
+                return txt[lang] || txt[lang.substring(0, 2)] || txt[Object.keys(txt)[0]] || ''; // Requested language not available, select first available language
+            return '';
+        }
+        function policy(domain, user, policies) {
+            try {
+                var policy = enumPolicy.none;
+                Object.keys(policies).forEach(function (key) {
+                    policy = organigram[domain][key].includes(user) && policy < policies[key] ? policies[key] : policy;
+                });
+                return policy;
+            } catch (err) {
+                console.log(err);
+                return undefined;                
+            }
         }
 
-        function proceed(form) {
-            var complete = true,
-                doc = documents[form.getAttribute('data-doc')],
-                task = doc.tasks[form.getAttribute('data-task')];
-            task.model.data.forEach(function (d) {
-                task.data[d.name] = form.querySelector('input[name=' + d.name + ']').value;
-                if (!task.data[d.name] && d.required)
+        // TODO: checkbox, radio, dropdown and datalist
+        function render(idDoc) {
+            var doc = documents[idDoc], 
+                lang = context.lang,
+                _policy = policy(context.domain, context.user, doc.policies);
+
+            if (!_policy)
+                return '';
+
+            var html = '<h1>' + polyglot(doc.name, lang) + '</h1>Created<br>Updated<br>Ties<br>Attachments';
+            doc.tasks.forEach(function (task, i) {
+                var taskModel = getTask(doc.model, task.model);
+
+                html += '<form data-doc="' + idDoc + '" data-task="' + i + '"><h2>' + polyglot(taskModel.title, lang) + '</h2><span><i class="far fa-fw fa-calendar"></i> ' + task.created.toLocaleString(lang) + ' by ' + task.creator + '</span>';
+                html += '<fieldset' + (task.state === 1 ? '' : ' disabled') + '>';
+                taskModel.data.forEach(function (d) {
+                    html += '<label>' + polyglot(d.label || d.name, lang) + '</label> ' +
+                        '<input type="' + (d.type || 'text') + '" name="' + d.name + '" value="' + polyglot(task.data[d.name] || d.default || '', lang) + '"' + (d.flags & enumData.required ? 'required' : '') + '>' +
+                        '<i class="fas fa-fw fa-info-circle" title="' + polyglot(d.description, lang) + '"></i><br>';
+                });
+                html += '</fieldset>';
+                if (task.state === 1)
+                    html += '<input type="submit" value="Proceed" onclick="next(this.form)"> <!--input type="submit" value="Release"-->';
+                else
+                    html += '<span><i class="fas fa-fw fa-history"></i> ' + task.completed.toLocaleString(lang) + ' by ' + task.completer + '</span>';
+                html += '</form>';
+            });
+
+            return html;
+        }
+
+        function next(form) {
+            var doc = documents[form.getAttribute('data-doc')],
+                task = doc.tasks[form.getAttribute('data-task')],
+                taskModel = getTask(doc.model, task.model),
+                complete = true;
+
+            doc.updated = new Date();
+
+            // Save data and determine if all required values are present
+            taskModel.data.forEach(function (d) {
+                // TODO: Should handle polyglot
+                task.data[d.name] = form.querySelector('[name=' + d.name + ']').value;
+                if (!task.data[d.name] && (d.flags & enumData.required))
                     complete = false;
             });
+
+            // Only if required data is present consider opening new task[s] and closing present task
             if (complete) {
-                task.state = 2; // Task closed
-                task.completed = new Date();
-                task.model.transitions.forEach(function (transition) {
-                    if (transition.logic()) {
+                var close = true;
+                taskModel.transitions.forEach(function (transition) {
+                    if (transition.toTask && transition.logic()) {
                         doc.tasks.push({
-                            model: doc.model.tasks.find(function (task) {
-                                return task.code === transition.toTask;
-                            }),
+                            model: transition.toTask,
                             state: 1,
                             created: new Date(),
-                            data: []
+                            user: context.domain + '/' + context.user,
+                            data: {}
                         });
-                    }
+                    } else
+                      close = !transition.toTask && transition.logic();
                 });
+                if (close) { // Close task
+                    task.state = 2;
+                    task.completed = new Date();
+
+                    // If all document tasks are closed then document is closed
+                    if (!doc.tasks.find(function (task) { return task.state === 1; })) {
+                        doc.state = 2;
+                        doc.completed = new Date();
+                    }
+                }
             }
+
+            // Persist data
             localStorage.documents = JSON.stringify(documents);
             return complete;
         }
     </script>
 </head>
 
-<body onload="visualize('someId', 0)">
+<body onload="document.getElementById('doc').innerHTML = render(0)">
     <!--
     <h1>BPMS</h1>
     <ul class="tabs">
@@ -221,7 +274,8 @@
         <li class="tabpage">Manage users</li>
     </ul>
     -->
-    <div id="someId"></div>
+    <div id="bpmn"></div>
+    <div id="doc"></div>
 </body>
 
 </html>

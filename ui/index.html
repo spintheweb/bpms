@@ -18,7 +18,7 @@
         };
 
         var enumState = { open: 1, hold: 2, closed: 3 };
-        var enumData = { required: 1, conditional: 2, analytical: 4 };
+        var enumData = { required: 1, critical: 3, analytic: 4, localized: 8 }; // Critical implies required and states that the data partakes in transition logic 
 
         // TODO: members should be SIDs? emails? Note the possibility of cross domain roles
         var organigram = {
@@ -39,16 +39,16 @@
         var processes = [{
             domain: "keyvisions.it",
             code: "riparazione",
-            title: "Riparazione",
+            name: "Riparazione",
             policies: { service: enumPolicy.execute },
             tasks: [{
                     code: "apertura",
-                    title: "Apertura",
+                    name: "Apertura",
                     flags: enumTask.start,
                     data: [{
                             name: "fullname",
                             default: "topolino",
-                            label: "First and last name",
+                            label: { en: "First and last name" },
                             flags: enumData.required,
                             policies: { production: enumPolicy.read }
                         },
@@ -72,12 +72,12 @@
                             type: "email",
                         },
                         {
-                            name: "articolo",
+                            name: "item",
                             flags: enumData.required,
-                            label: "Codice articolo"
+                            label: { en: "Item code", it: "Codice articolo" }
                         },
                         {
-                            name: "note",
+                            name: "dbo",
                             type: "date"
                         }
                     ],
@@ -91,10 +91,10 @@
                 },
                 {
                     code: "analisi",
-                    title: "Analisi",
+                    name: "Analisi",
                     data: [{
                             name: "note",
-                            flags: enumData.required,
+                            flags: enumData.required | enumData.localized,
                             label: "note"
                         },
                         {
@@ -112,11 +112,10 @@
                 },
                 {
                     code: "conclusione",
-                    title: "Conclusione",
+                    name: "Conclusione",
                     data: [{
                         name: "notes",
-                        default: { it: "topolino", en: "Mickey Mouse" },
-                        flags: enumData.required | enumData.conditional,
+                        flags: enumData.required | enumData.localized,
                         label: { it: "Note", en: "Notes" }
                     }],
                     transitions: []
@@ -160,11 +159,9 @@
 
         // TODO: Get and set
         function polyglot(txt, lang) {
-            if (typeof txt === 'string')
-                return txt;
             if (typeof txt === 'object')
                 return txt[lang] || txt[lang.substring(0, 2)] || txt[Object.keys(txt)[0]] || ''; // Requested language not available, select first available language
-            return '';
+            return txt;
         }
         function policy(domain, user, policies) {
             try {
@@ -190,11 +187,15 @@
 
             var html = '<h1>' + polyglot(doc.name, lang) + '</h1>Created<br>Updated<br>Ties<br>Attachments';
             doc.tasks.forEach(function (task, i) {
+                _policy = policy(context.domain, context.user, task.policies);
+
                 var taskModel = getTask(doc.model, task.model);
 
-                html += '<form data-doc="' + idDoc + '" data-task="' + i + '"><h2>' + polyglot(taskModel.title, lang) + '</h2><span><i class="far fa-fw fa-calendar"></i> ' + task.created.toLocaleString(lang) + ' by ' + task.creator + '</span>';
+                html += '<form data-doc="' + idDoc + '" data-task="' + i + '"><h2>' + polyglot(taskModel.name, lang) + '</h2><span><i class="far fa-fw fa-calendar"></i> ' + task.created.toLocaleString(lang) + ' by ' + task.creator + '</span>';
                 html += '<fieldset' + (task.state === 1 ? '' : ' disabled') + '>';
                 taskModel.data.forEach(function (d) {
+                    _policy = policy(context.domain, context.user, d.policies);
+
                     html += '<label>' + polyglot(d.label || d.name, lang) + '</label> ' +
                         '<input type="' + (d.type || 'text') + '" name="' + d.name + '" value="' + polyglot(task.data[d.name] || d.default || '', lang) + '"' + (d.flags & enumData.required ? 'required' : '') + '>' +
                         '<i class="fas fa-fw fa-info-circle" title="' + polyglot(d.description, lang) + '"></i><br>';
@@ -220,8 +221,13 @@
 
             // Save data and determine if all required values are present
             taskModel.data.forEach(function (d) {
-                // TODO: Should handle polyglot
-                task.data[d.name] = form.querySelector('[name=' + d.name + ']').value;
+                if (d.flags & enumData.localized) {
+                    if (!task.data[d.name])
+                        task.data[d.name] = {};
+                    task.data[d.name][context.lang] = form.querySelector('[name=' + d.name + ']').value;
+                } else 
+                    task.data[d.name] = form.querySelector('[name=' + d.name + ']').value;
+
                 if (!task.data[d.name] && (d.flags & enumData.required))
                     complete = false;
             });

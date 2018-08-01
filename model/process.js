@@ -8,7 +8,6 @@ const Task = require('./task');
 
 class Process {
     constructor(code = 'New Process') {
-        this.guid = null;
         this.code = code;
         this.name = code;
         this.domain = null; // 

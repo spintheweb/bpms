@@ -10,16 +10,13 @@ const Role = require('./role');
 
 // A task is a wrapped collection of key-value pairs
 class TaskModel {
-    constructor(process, name = 'New Task', data = [ { name: "notes", type: "String", default: null, required: false, description: "Notes", policies: [] }]) {
-        this.guid = null; // Assigned by mongodb
+    constructor(code = 'New Task', data = [ { name: "notes", type: "String", default: null, required: false, description: "Notes", policies: [] }]) {
+        this.parent = null;
         this.code = code;
-        this.parent = process;
-        this.name = name;
+        this.name = code;
         this.data = data;
         this.policies = [];
-        this.transitions = [
-            { taskModel: guid, proceed: () => { return true; } }
-        ];
+        this.transitions = [];
         this.attributes = [];
         this.ui = null;
     }
@@ -34,15 +31,11 @@ class TaskModel {
             throw new Error('Cannot add child to task model');
         }
     }
-    create(document) {
-        return new Task(this, document);
-    }
 }
 
 class Task {
     constructor(model, document) {
         if (document instanceof Document) {
-            this.guid = null; // Assigned by mongodb
             this.model = model;
             this.parent = document;
             this.created = new Date();
@@ -82,4 +75,4 @@ class Task {
     }
 }
 
-module.exports.Task = TaskModel;
+module.exports = TaskModel;

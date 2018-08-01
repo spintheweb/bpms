@@ -17,7 +17,7 @@
             lang: "en"
         };
 
-        var enumState = { open: 1, hold: 2, closed: 3 };
+        var enumState = { open: 1, hold: 2, closed: 3, replaced: 4 };
         var enumData = { required: 1, critical: 3, analytic: 4, localized: 8 }; // Critical implies required and states that the data partakes in transition logic 
 
         // TODO: members should be SIDs? emails? Note the possibility of cross domain roles
@@ -45,6 +45,7 @@
                     code: "apertura",
                     name: "Apertura",
                     flags: enumTask.start,
+                    ui: null, // User interface
                     data: [{
                             name: "fullname",
                             default: "topolino",
@@ -105,6 +106,7 @@
                     ],
                     transitions: [{
                         toTask: "conclusione",
+//                        flags: enumTransition.userz,
                         logic: function () {
                             return true;
                         }
@@ -175,6 +177,14 @@
                 return undefined;                
             }
         }
+        function docData(idDoc) {
+            var doc = documents[idDoc], docdata = {};
+            doc.tasks.forEach(function (task) {
+                if (task.state !== enumState.replaced)
+                    docdata[task.model] = task.data;
+            });
+            return docdata;
+        }
 
         // TODO: checkbox, radio, dropdown and datalist
         function render(idDoc) {
@@ -207,7 +217,6 @@
                     html += '<span><i class="fas fa-fw fa-history"></i> ' + task.completed.toLocaleString(lang) + ' by ' + task.completer + '</span>';
                 html += '</form>';
             });
-
             return html;
         }
 
@@ -263,6 +272,12 @@
             localStorage.documents = JSON.stringify(documents);
             return complete;
         }
+
+        function release(task) {
+
+        }
+
+        
     </script>
 </head>
 
@@ -280,6 +295,23 @@
         <li class="tabpage">Manage users</li>
     </ul>
     -->
+    <table>
+        <thead>
+            <tr><th></th><th>Name</th><th>Description</th></tr>
+        </thead>
+    </table>
+    <form method="POST" action="/process">
+        <label for="name">Name</label><input id="nameid" type="text" name="name" required>
+        <button type="submit">Create process</button>
+    </form>
+    <form method="POST" action="/doc">
+        <label for="process">Process</label><select name="process" required></select><br>
+        <label for="name">Name</label><input type="text" name="name" required><br>
+        <button type="submit">Create document</button>
+    </form>
+    <ul >
+
+    </ul>
     <div id="bpmn"></div>
     <div id="doc"></div>
 </body>

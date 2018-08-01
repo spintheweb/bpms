@@ -4,40 +4,28 @@ const path = require('path'),
   hostname = 'localhost',
   port = 3000;
 
-//const bpms = require('./model/bpms')({ datasource: 'mongodb://localhost:27017/bpms' });
+const bpms = require('./model/bpms')({ datasource: 'mongodb://localhost:27017/bpms' });
 
+app.use(express.json());
 app.use('/css', express.static(path.join(__dirname, '/ui/styles')));
 
-app.route('/processes')
+app.route('/process(/:processId)?')
   .get((req, res) => {
-    let txt = '';
-    bpms.processes.forEach((process) => {
-      txt += process.name;
-    });
-    res.send(txt);
-  })
-  .post(); // Create
-
-app.route('/process/:processId')
-  .get((req, res) => {
-    bpms.getProcess(req.params.processId);
+    let query = req.params.processId ? { _id: req.params.processId } : {};
+    bpms.selectProcess(query)
+      .then(result => { res.json(result); })
+      .catch(err => { throw err; });
   })
   .post((req, res) => {
-    bpms.setProcess(req.params.processId);
+    if (req.params.processId)
+      bpms.updateProcess({ _id: req.params.processId });
+    else
+      bpms.createProcess();
+  })
+  .delete((req, res) => {
+    if (req.params.processId)
+      bpms.deleteProcess({ _id: req.params.processId });
   });
-
-app.route('/docs')
-  .get((req, res) => { // List
-    res.send(doc1.name);
-  })
-  .post((req, res) => {
-    return new Document('New document');
-  }); // Create
-  
-app.route('/doc/:docId')
-  .get() // Read
-  .put() // Update
-  .delete(); // Delete
 
 app.get('/', function (req, res) {
   res.sendFile(path.join(`${__dirname}/ui/index.html`));

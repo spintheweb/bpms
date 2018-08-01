@@ -15,7 +15,7 @@ class Document {
         else
             this.model = null; // Base process memo
 
-        this.guid = null;
+        this.code = null;
         this.name = name;
         this.domain = null; // Associated business domain
         this.created = new Date();

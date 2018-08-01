@@ -4,7 +4,7 @@
  * MIT Licensed
  */
 
-const DBClient = require('mongodb').MongoClient;
+const DS = require('mongodb');
 
 const Process = require('./process');
 const Document = require('./document');
@@ -15,65 +15,50 @@ const Role = require('./role');
 module.exports = (settings = {}) => {
     let bpms = {};
 
-    bpms.datasource = settings.datasource || 'mongodb://localhost:27017/bpms';
-    
     // If BPMS does not exist create it
-    DBClient.connect(bpms.datasource)
-        .then(db => {
-
-        })
-        .catch((err) => {
-            throw err;
+    DS.MongoClient.connect(settings.datasource || 'mongodb://localhost:27017/bpms', { useNewUrlParser: true })
+        .then(db => { bpms.dbo = db.db(); })
+        .catch(err => { 
+            _init();
+            throw err; 
         });
-
-    // Initialize BPMS if empty
-    // Create default roles: administrator, editor, observer
-    // Create default Memo process
-    if (!bpms.processes()) {
-        let memo = new Process('memo');
+    
+    // Verify that BPM datastore is setup
+    function _init() {
+        // Create default roles
+        // Create memo process
+        // Create memo
     }
 
-    bpms.processes = (id, data) => { 
-        DBClient.connect(bpms.datasource)
-            .then(db => {
-                return db.collection('processes')
-                    .find({}, { _id: id })
-                    .then(result => result)
-                    .then(() => db.close());
-            });
-    };
-    bpms.roles = () => null;
-    bpms.documents = () => null;
+    // Manage BPM objects
+    function _create(collection, data) { 
+        return bpms.dbo.collection(collection).insertOne(new Process(data))
+            .then(result => { return result; })
+            .catch(err => { throw err; });
+    }
+    function _select(collection, query) {
+        if (typeof query._id === 'string')
+            query._id = DS.ObjectID(query._id);
 
-    bpms.getProcess = (guid) => {};
-    bpms.setProcess = (guid, data) => {
-        if (guid) {
+        return bpms.dbo.collection(collection).find(query || {}).toArray()
+            .then(result => { return result; })
+            .catch(err => { throw err; });
+    }
+    function _update(collection, id, data) {
+        return bpms.dbo.collection(collection).updateOne({ _id: new DS.ObjectID(id) }, { $set: data })
+            .then(result => { return result; })
+            .catch(err => { throw err; });
+    }
+    function _delete(collection, id) {
+        bpms.dbo.collection(collection).deleteOne({ _id: new DS.ObjectID(id) })
+            .then(obj => { console.log(obj); })
+            .catch(err => { throw err; });
+    }
 
-        } else {
-            let process = new Process(name);
-            bpms.processes.push(process);
-        }
-        return process;
-    };
-    bpms.deleteProcess = (guid) => {};
-
-    bpms.getDocument = (guid) => {
-    };
-    bpms.setDocument = (guid, data) => {
-        let document;
-        if (guid) {
-            if (process instanceof Process)
-            document = new Document(process, name);
-        } else {
-
-        }
-        return document;
-    };
-    bpms.deleteDocument = (id) => {};
-
-    bpms.createRole = (name, members) => {
-        let role = bpms.roles.find((role) => { return role.name === name; });
-    };
+    bpms.createProcess = (data) => { return _create('processes', data); };
+    bpms.selectProcess = (query) => { return _select('processes', query); };
+    bpms.updateProcess = (id, data) => { return _update('processes', id, data); };
+    bpms.deleteProcess = (id) => { return _delete('processes', id); };
 
     return bpms;
 };

@@ -31,9 +31,20 @@ module.exports = (settings = {}) => {
     }
 
     // Manage BPM objects
-    function _create(collection, data) { 
-        return bpms.dbo.collection(collection).insertOne(new Process(data))
-            .then(result => { return result; })
+    function _create(collection, data) {
+        let obj;
+        switch (collection) {
+            case 'processes':
+                obj = new Process(data);
+                break;
+            case 'documents':
+                obj = new Document(data);
+                break;
+            default:
+                return {};
+        }
+        return bpms.dbo.collection(collection).insertOne(obj)
+            .then(result => { return result.ops[0]; })
             .catch(err => { throw err; });
     }
     function _select(collection, query) {

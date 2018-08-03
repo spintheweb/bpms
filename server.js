@@ -1,33 +1,39 @@
 const path = require('path'),
   express = require('express'),
+  bodyParser = require('body-parser'),
   app = express(),
   hostname = 'localhost',
   port = 3000;
 
 const bpms = require('./model/bpms')({ datasource: 'mongodb://localhost:27017/bpms' });
 
-app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 app.use('/css', express.static(path.join(__dirname, '/ui/styles')));
 
-app.route('/process(/:processId)?')
+app.route('/process(/:id)?')
   .get((req, res) => {
-    let query = req.params.processId ? { _id: req.params.processId } : {};
+    let query = req.params.id ? { _id: req.params.id } : {};
     bpms.selectProcess(query)
       .then(result => { res.json(result); })
       .catch(err => { throw err; });
   })
   .post((req, res) => {
-    if (req.params.processId)
-      bpms.updateProcess({ _id: req.params.processId });
+    if (req.params.id)
+      res.json(bpms.updateProcess({ _id: req.params.id }, req.body));
     else
-      bpms.createProcess();
+      bpms.createProcess(req.body)
+        .then(result => { res.json(result); })
+        .catch(err => { throw err; });
   })
   .delete((req, res) => {
-    if (req.params.processId)
-      bpms.deleteProcess({ _id: req.params.processId });
+    if (req.params.id)
+      bpms.deleteProcess({ _id: req.params.id })
+        .then(result => { res.json(result); })
+        .catch(err => { throw err; });
   });
 
-app.get('/', function (req, res) {
+app.get('/', (req, res) => {
   res.sendFile(path.join(`${__dirname}/ui/index.html`));
 });
 

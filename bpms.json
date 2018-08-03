@@ -1,4 +1,6 @@
 {
     "version": "1.0.0",
+    "hostname": "localhost",
+    "port": 3000,
     "datasource": "mongodb://localhost:27017/bpms"
 }

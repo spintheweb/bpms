@@ -3,9 +3,7 @@
  * Copyright(c) 2018 Giancarlo Trevisan
  * MIT Licensed
  */
-
 const DS = require('mongodb');
-
 const Process = require('./process');
 const Document = require('./document');
 const Role = require('./role');
@@ -15,7 +13,7 @@ const Role = require('./role');
 module.exports = (settings = {}) => {
     let bpms = {};
 
-    // If BPMS does not exist create it
+    // If BPMS datastore does not exist create then it
     DS.MongoClient.connect(settings.datasource || 'mongodb://localhost:27017/bpms', { useNewUrlParser: true })
         .then(db => { bpms.dbo = db.db(); })
         .catch(err => { 
@@ -30,7 +28,7 @@ module.exports = (settings = {}) => {
         // Create memo
     }
 
-    // Manage BPM objects
+    // CRUD operations
     function _create(collection, data) {
         let obj;
         switch (collection) {
@@ -47,7 +45,7 @@ module.exports = (settings = {}) => {
             .then(result => { return result.ops[0]; })
             .catch(err => { throw err; });
     }
-    function _select(collection, query) {
+    function _read(collection, query) {
         if (typeof query._id === 'string')
             query._id = DS.ObjectID(query._id);
 
@@ -65,11 +63,16 @@ module.exports = (settings = {}) => {
             .then(obj => { console.log(obj); })
             .catch(err => { throw err; });
     }
+    // Allow only model data
+    function _checkData(obj, data) {
 
-    bpms.createProcess = (data) => { return _create('processes', data); };
-    bpms.selectProcess = (query) => { return _select('processes', query); };
-    bpms.updateProcess = (id, data) => { return _update('processes', id, data); };
-    bpms.deleteProcess = (id) => { return _delete('processes', id); };
+    }
+
+    // CRUD on collection extracted from path
+    bpms.create = (path, data) => { return _create(path.split('/')[1], data); };
+    bpms.read = (path, query) => { return _read(path.split('/')[1], query); };
+    bpms.update = (path, id, data) => { return _update(path.split('/')[1], id, data); };
+    bpms.delete = (path, id) => { return _delete(path.split('/')[1], id); };
 
     return bpms;
 };

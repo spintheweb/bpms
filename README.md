@@ -19,4 +19,22 @@ A process is subdivided into tasks logically connected forming a net
 Interpret the process model by: verifing task data and assigning tasks.
 Processes are modelled as tasks, each task has policyThe process model subdivides each task 
 
-A document 
+A document represents a new instance of a process, the user can then create more than one document related to a given process. 
+
+A document has the following properties:
+
+1. Unique code
+2. Name of the process it represents
+3. Creation date
+4. Expiration date
+5. User code that created the document
+6. Managed by, the code of the last user who managed the document
+7. Document status: closed, open or standby
+8. Tasks
+
+
+
+
+
+
+

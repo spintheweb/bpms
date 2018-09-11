@@ -33,6 +33,9 @@ A document has the following properties:
 8. Tasks
 
 
+## Technologies
+
+This project is built on HTML, SVG, XML, CSS, javascript, node.js and JSON.
 
 
 
